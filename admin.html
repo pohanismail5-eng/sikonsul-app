@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Asisten - SiKonsul Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20width=%22100%22%20height=%22100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col justify-between">
+
+  <!-- Admin Login Modal (if not authenticated) -->
+  <div id="loginModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-8 space-y-5 shadow-2xl animate-slide-down">
+      <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-blue-500/30">
+        <i data-lucide="shield-check" class="w-7 h-7"></i>
+      </div>
+      <div class="text-center">
+        <h3 class="text-xl font-bold text-slate-900">Portal Asisten Praktikum</h3>
+        <p class="text-xs text-slate-500 mt-1">Masukkan kata sandi admin untuk mengakses dashboard antrean dan jadwal.</p>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Kata Sandi</label>
+          <div class="relative">
+            <input type="password" id="adminPasswordInput" placeholder="Default: admin"
+              class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none text-sm transition">
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Password bawaan sistem: <span class="font-mono font-bold text-slate-700">admin</span></p>
+        </div>
+        <p id="loginError" class="text-xs text-rose-600 font-semibold hidden text-center"></p>
+        <button id="btnLogin" type="button"
+          class="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2">
+          <span>Masuk ke Dashboard</span>
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="text-center">
+        <a href="/" class="text-xs text-slate-400 hover:text-slate-600">Kembali ke Halaman Mahasiswa</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-md">
+          <i data-lucide="shield" class="w-5 h-5 text-emerald-400"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-black text-lg text-slate-900 leading-tight">SiKonsul Admin</h1>
+            <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Live Monitor</span>
+          </div>
+          <p class="text-xs text-slate-500" id="adminLabSubtitle">Konsultasi Praktikum 2026</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="/" target="_blank" class="text-xs font-semibold text-slate-600 hover:text-blue-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition flex items-center gap-1.5">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Lihat Halaman Mahasiswa</span>
+        </a>
+        <button id="btnLogout" type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-700 px-3 py-1.5 rounded-lg hover:bg-rose-50 transition flex items-center gap-1">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Keluar</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Admin Layout -->
+  <main class="max-w-7xl mx-auto px-4 py-6 w-full space-y-6">
+
+    <!-- Top Banner: Share Link to WhatsApp Group -->
+    <div class="bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-900 rounded-3xl p-5 sm:p-6 text-white shadow-lg shadow-emerald-900/10 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="space-y-1 text-center md:text-left">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-white/20 rounded-full text-xs font-semibold">
+          <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+          <span>Tautan Siap Dibagikan ke Grup WA Praktikum</span>
+        </div>
+        <h3 class="text-lg font-bold">Kirim Link Pendaftaran ke Mahasiswa Anda</h3>
+        <p class="text-xs text-emerald-100">Mahasiswa membuka link ini dari HP/laptop untuk memilih jadwal dan melakukan check-in mandiri.</p>
+        <div class="pt-1 flex items-center justify-center md:justify-start gap-2">
+          <span class="px-3 py-1 bg-black/30 rounded-lg font-mono text-xs font-bold text-amber-300" id="displayShareUrl">http://...</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="btnCopyWaAnnouncement" type="button"
+          class="px-5 py-3 rounded-xl bg-white text-emerald-900 hover:bg-emerald-50 font-bold text-xs sm:text-sm shadow-md transition flex items-center gap-2">
+          <i data-lucide="copy" class="w-4 h-4 text-emerald-700"></i>
+          <span>Salin Teks Lengkap untuk WhatsApp</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex border-b border-slate-200 overflow-x-auto space-x-2 pb-1 text-sm font-semibold">
+      <button class="admin-tab-btn active px-4 py-2.5 rounded-xl transition flex items-center gap-2 text-blue-600 bg-blue-50 border border-blue-200" data-tab="tab-queue">
+        <i data-lucide="users" class="w-4 h-4"></i>
+        <span>Antrean & Check-In</span>
+        <span id="badgeQueueCount" class="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">0</span>
+      </button>
+
+      <button class="admin-tab-btn px-4 py-2.5 rounded-xl transition flex items-center gap-2 text-slate-600 hover:bg-white" data-tab="tab-slots">
+        <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+        <span>Kelola Jadwal & Lokasi</span>
+        <span id="badgeSlotsCount" class="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">0</span>
+      </button>
+
+      <button class="admin-tab-btn px-4 py-2.5 rounded-xl transition flex items-center gap-2 text-slate-600 hover:bg-white" data-tab="tab-sanctions">
+        <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-500"></i>
+        <span>Sistem Sanksi & Terlambat</span>
+        <span id="badgeSanctionsCount" class="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold">0</span>
+      </button>
+
+      <button class="admin-tab-btn px-4 py-2.5 rounded-xl transition flex items-center gap-2 text-slate-600 hover:bg-white" data-tab="tab-settings">
+        <i data-lucide="settings" class="w-4 h-4"></i>
+        <span>Pengaturan WA & Notifikasi</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: ANTREAN & CHECK-IN (LIVE SCOREBOARD) -->
+    <div id="tab-queue" class="tab-content space-y-6">
+      
+      <!-- Statistics KPI Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Booking</p>
+          <p class="text-2xl font-black text-slate-900 mt-1" id="statTotalBookings">0</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">Praktikan terdaftar</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Sudah Check-In</p>
+          <p class="text-2xl font-black text-emerald-600 mt-1" id="statCheckedIn">0</p>
+          <p class="text-[11px] text-emerald-700 mt-0.5">Siap di lokasi</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-amber-500">Menunggu Check-In</p>
+          <p class="text-2xl font-black text-amber-500 mt-1" id="statPending">0</p>
+          <p class="text-[11px] text-amber-700 mt-0.5">Belum masuk jam / belum lapor</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-rose-600">Terlambat / Sanksi</p>
+          <p class="text-2xl font-black text-rose-600 mt-1" id="statLate">0</p>
+          <p class="text-[11px] text-rose-700 mt-0.5">Melewati batas waktu</p>
+        </div>
+      </div>
+
+      <!-- Actions Bar -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <span class="text-xs font-bold text-slate-600 uppercase">Filter:</span>
+          <select id="filterStatus" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-medium focus:ring-2 focus:ring-blue-600 outline-none">
+            <option value="ALL">Semua Status</option>
+            <option value="CHECKED_IN">Sudah Check-In</option>
+            <option value="PENDING">Menunggu Check-In</option>
+            <option value="LATE">Terlambat / Sanksi</option>
+            <option value="COMPLETED">Selesai Konsul</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button id="btnCopyDailyRecap" type="button"
+            class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-1.5 transition">
+            <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
+            <span>Salin Rekap Hari Ini</span>
+          </button>
+          <button id="btnRefreshQueue" type="button"
+            class="px-3.5 py-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 font-semibold text-xs flex items-center gap-1.5 transition">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>Segarkan</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Queue Table -->
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-bold text-[10px] tracking-wider">
+              <tr>
+                <th class="py-3.5 px-4">Antrean</th>
+                <th class="py-3.5 px-4">Praktikan</th>
+                <th class="py-3.5 px-4">Jadwal & Lokasi</th>
+                <th class="py-3.5 px-4">Status Check-In</th>
+                <th class="py-3.5 px-4">Sanksi</th>
+                <th class="py-3.5 px-4 text-right">Aksi Asisten</th>
+              </tr>
+            </thead>
+            <tbody id="queueTableBody" class="divide-y divide-slate-100 font-medium">
+              <!-- Rendered dynamically by admin.js -->
+            </tbody>
+          </table>
+        </div>
+        <div id="queueEmptyState" class="py-12 text-center text-slate-400 text-xs hidden">
+          Belum ada praktikan yang mendaftar.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: KELOLA JADWAL & LOKASI -->
+    <div id="tab-slots" class="tab-content space-y-6 hidden">
+      
+      <!-- Add Slot Form Card (Single & Bulk Generator) -->
+      <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="calendar-plus" class="w-5 h-5 text-blue-600"></i>
+              Tambah Jadwal Konsultasi Baru
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">Tentukan tanggal, jam, lokasi, dan kuota konsultasi yang dapat dipilih mahasiswa.</p>
+          </div>
+          <!-- Toggle Bulk Generator -->
+          <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+            <button id="modeSingleBtn" type="button" class="px-3 py-1 text-xs font-bold rounded-lg bg-white shadow-sm text-slate-900">1 Slot</button>
+            <button id="modeBulkBtn" type="button" class="px-3 py-1 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900">Bulk Generator (Banyak Slot)</button>
+          </div>
+        </div>
+
+        <form id="formAddSlot" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Tanggal Konsul *</label>
+              <input type="date" id="slotDate" required
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs font-semibold">
+            </div>
+
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Lokasi Konsul *</label>
+              <input type="text" id="slotLocation" required placeholder="Contoh: Lab Komputer Lantai 2 / Ruang Dosen 304"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs font-medium">
+            </div>
+          </div>
+
+          <!-- Single Slot Timing -->
+          <div id="singleTimingContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Jam Mulai *</label>
+              <input type="time" id="slotStartTime" value="09:00"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs font-mono font-bold">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Jam Selesai *</label>
+              <input type="time" id="slotEndTime" value="09:20"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs font-mono font-bold">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Kuota Praktikan *</label>
+              <input type="number" id="slotQuota" value="1" min="1" max="10"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs font-bold">
+            </div>
+          </div>
+
+          <!-- Bulk Slot Timing (Hidden by default) -->
+          <div id="bulkTimingContainer" class="grid grid-cols-1 sm:grid-cols-4 gap-4 hidden bg-blue-50/60 p-4 rounded-2xl border border-blue-200">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-blue-900 mb-1.5">Jam Mulai Sesi 1</label>
+              <input type="time" id="bulkStartTime" value="09:00"
+                class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs font-mono font-bold bg-white">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-blue-900 mb-1.5">Durasi Tiap Sesi</label>
+              <select id="bulkInterval" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs font-semibold bg-white">
+                <option value="15">15 Menit</option>
+                <option value="20" selected>20 Menit</option>
+                <option value="30">30 Menit</option>
+                <option value="45">45 Menit</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-blue-900 mb-1.5">Jumlah Sesi</label>
+              <input type="number" id="bulkCount" value="6" min="1" max="25"
+                class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs font-bold bg-white">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-blue-900 mb-1.5">Kuota Tiap Sesi</label>
+              <input type="number" id="bulkQuota" value="1" min="1" max="5"
+                class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs font-bold bg-white">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Catatan / Instruksi Tambahan (Opsional)</label>
+            <input type="text" id="slotNotes" placeholder="Contoh: Bawa draf revisi Bab 4 dan format pengujian"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs">
+          </div>
+
+          <div class="pt-2 flex justify-end">
+            <button type="submit"
+              class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-md transition flex items-center gap-2">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span id="btnSaveSlotText">Tambahkan Jadwal</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Slots List Table -->
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+          <h4 class="font-bold text-sm text-slate-900">Daftar Slot Jadwal yang Telah Dibuat</h4>
+          <span class="text-xs text-slate-500" id="totalSlotsCount">Total: 0 Jadwal</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-bold text-[10px] tracking-wider">
+              <tr>
+                <th class="py-3 px-4">Tanggal</th>
+                <th class="py-3 px-4">Jam</th>
+                <th class="py-3 px-4">Lokasi</th>
+                <th class="py-3 px-4">Kuota / Terisi</th>
+                <th class="py-3 px-4">Catatan</th>
+                <th class="py-3 px-4 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="slotsTableBody" class="divide-y divide-slate-100 font-medium">
+              <!-- Rendered by admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 3: SISTEM SANKSI & KETERLAMBATAN -->
+    <div id="tab-sanctions" class="tab-content space-y-6 hidden">
+      
+      <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-4">
+        <div class="border-b border-slate-100 pb-3">
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="scale" class="w-5 h-5 text-rose-600"></i>
+            Konfigurasi Aturan Sanksi & Toleransi Keterlambatan
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">Sistem secara otomatis mendeteksi mahasiswa yang telat check-in dan menerapkan sanksi ini.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              Batas Toleransi Keterlambatan (Menit)
+            </label>
+            <input type="number" id="configLateTolerance" min="0" max="60" value="5"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs font-bold">
+            <p class="text-[11px] text-slate-400 mt-1">Jika jadwal mulai 09:00 dan toleransi 5 menit, praktikan yang check-in lewat dari 09:05 otomatis kena sanksi.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              Waktu Buka Check-in Sebelum Jadwal (Menit)
+            </label>
+            <input type="number" id="configCheckInWindow" min="15" max="300" value="120"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs font-bold">
+            <p class="text-[11px] text-slate-400 mt-1">Contoh: 120 menit artinya pintu check-in tiket baru aktif 2 jam sebelum jadwal.</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+            Isi Sanksi Praktikum Bawaan
+          </label>
+          <textarea id="configDefaultSanction" rows="3"
+            class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 outline-none text-xs leading-relaxed font-medium"
+            placeholder="Tuliskan sanksi yang akan ditampilkan pada tiket mahasiswa yang terlambat..."></textarea>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input type="checkbox" id="configAutoLateCheck" checked class="w-4 h-4 text-blue-600 rounded">
+          <label for="configAutoLateCheck" class="text-xs font-medium text-slate-700">
+            Aktifkan pengecekan otomatis keterlambatan setiap menit (Otomatis beri sanksi jika belum check-in).
+          </label>
+        </div>
+
+        <div class="pt-2 flex justify-end">
+          <button id="btnSaveSanctionConfig" type="button"
+            class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition flex items-center gap-2">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Simpan Aturan Sanksi</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Log of Sanctioned Students -->
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+          <h4 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500"></i>
+            <span>Daftar Mahasiswa yang Dikenakan Sanksi</span>
+          </h4>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-bold text-[10px] tracking-wider">
+              <tr>
+                <th class="py-3 px-4">Nama & NIM</th>
+                <th class="py-3 px-4">Jadwal Sesi</th>
+                <th class="py-3 px-4">Keterangan Sanksi</th>
+                <th class="py-3 px-4">Status Sanksi</th>
+                <th class="py-3 px-4 text-right">Aksi Ampuni</th>
+              </tr>
+            </thead>
+            <tbody id="sanctionsTableBody" class="divide-y divide-slate-100 font-medium">
+              <!-- Rendered by admin.js -->
+            </tbody>
+          </table>
+        </div>
+        <div id="sanctionsEmptyState" class="py-8 text-center text-slate-400 text-xs hidden">
+          Tidak ada mahasiswa yang terkena sanksi saat ini. Semua hadir tepat waktu! 🎉
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 4: PENGATURAN WA & NOTIFIKASI -->
+    <div id="tab-settings" class="tab-content space-y-6 hidden">
+      
+      <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
+        <div class="border-b border-slate-100 pb-3">
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="message-square" class="w-5 h-5 text-emerald-600"></i>
+            Pengaturan Notifikasi WhatsApp ke HP Anda
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">Sistem akan mengirimkan pemberitahuan setiap kali ada mahasiswa yang memilih jadwal atau melakukan check-in.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Nomor WhatsApp Anda (Asisten / Dosen) *
+              </label>
+              <input type="text" id="settingAdminWa" placeholder="Contoh: 08123456789 atau 628123456789"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-600 outline-none text-xs font-mono font-bold">
+              <p class="text-[11px] text-slate-400 mt-1">Notifikasi akan langsung ditujukan ke nomor WhatsApp ini.</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Nama Asisten / Dosen
+              </label>
+              <input type="text" id="settingAdminName" placeholder="Contoh: Kak Asisten Lab Basis Data"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-600 outline-none text-xs font-medium">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Judul Praktikum / Mata Kuliah
+            </label>
+            <input type="text" id="settingLabTitle" placeholder="Contoh: Praktikum Pemrograman Berorientasi Objek 2026"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-600 outline-none text-xs font-medium">
+          </div>
+
+          <!-- Automated WhatsApp Gateway API Option (Fonnte) -->
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h5 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+                  Pengiriman Otomatis di Latar Belakang (Fonnte API Token - Opsional)
+                </h5>
+                <p class="text-[11px] text-slate-500 mt-0.5">
+                  Jika diisi token Fonnte, sistem akan mengirim WA otomatis tanpa perlu klik tombol wa.me. Jika dikosongkan, sistem tetap bekerja menggunakan link wa.me 1-klik.
+                </p>
+              </div>
+            </div>
+            <input type="text" id="settingFonnteToken" placeholder="Masukkan token Fonnte Anda di sini (opsional)"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-600 outline-none text-xs font-mono">
+            <p class="text-[10px] text-slate-400">Token gratis bisa didapat di <a href="https://fonnte.com" target="_blank" class="text-emerald-600 underline">fonnte.com</a> dalam 1 menit.</p>
+          </div>
+
+          <div class="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <button id="btnTestWaNotification" type="button"
+              class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs transition flex items-center justify-center gap-2">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              <span>Kirim Pesan Tes ke WA Saya</span>
+            </button>
+
+            <button id="btnSaveGeneralSettings" type="button"
+              class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2">
+              <i data-lucide="check" class="w-4 h-4"></i>
+              <span>Simpan Pengaturan</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 mt-8">
+    <span>SiKonsul Admin • Hak Akses Terlindungi</span>
+  </footer>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>
