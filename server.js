@@ -24,7 +24,7 @@ const defaultData = {
     "adminName": "Asisten Praktikum",
     "adminWa": "6285323085893",
     "labTitle": "Konsultasi Laporan Praktikum INSTIPER",
-    "publicUrl": "https://physicians-definition-stamp-choose.trycloudflare.com",
+    "publicUrl": "https://potter-risks-library-classic.trycloudflare.com",
     "checkInWindowMinutes": 120,
     "lateToleranceMinutes": 10,
     "defaultSanction": "Nilai asistensi laporan dikurangi 20% & Konsultasi dipindahkan ke nomor antrean terakhir",
@@ -170,38 +170,161 @@ const defaultData = {
       "sanctionApplied": null,
       "sanctionStatus": "NONE",
       "createdAt": "2026-10-24T04:04:30.372Z"
+    },
+    {
+      "id": "book-1792820416306-k33b",
+      "bookingCode": "PASS-9995",
+      "queueNumber": 9,
+      "slotId": "slot-instiper-1600",
+      "studentName": "Nickyta Fainaya Br Damanik",
+      "studentNim": "25243004/Kelompok 4",
+      "studentWa": "082180988495",
+      "checkInStatus": "PENDING",
+      "checkInTime": null,
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-24T05:40:16.306Z"
+    },
+    {
+      "id": "book-1792820437741-bidz",
+      "bookingCode": "PASS-3812",
+      "queueNumber": 10,
+      "slotId": "slot-instiper-1600",
+      "studentName": "Maria Evta Tabita Siregar",
+      "studentNim": "25242026/7",
+      "studentWa": "081267563721",
+      "checkInStatus": "PENDING",
+      "checkInTime": null,
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-24T05:40:37.741Z"
+    },
+    {
+      "id": "book-1792820453725-eo8v",
+      "bookingCode": "PASS-1360",
+      "queueNumber": 11,
+      "slotId": "slot-instiper-1600",
+      "studentName": "Ayu Wandayani",
+      "studentNim": "25241016/03",
+      "studentWa": "082283119459",
+      "checkInStatus": "PENDING",
+      "checkInTime": null,
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-24T05:40:53.725Z"
+    },
+    {
+      "id": "book-1792820467742-41c6",
+      "bookingCode": "PASS-5598",
+      "queueNumber": 12,
+      "slotId": "slot-instiper-1600",
+      "studentName": "Marantius algo",
+      "studentNim": "25244009",
+      "studentWa": "0895326196217",
+      "checkInStatus": "PENDING",
+      "checkInTime": null,
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-24T05:41:07.742Z"
+    },
+    {
+      "id": "book-1792820660107-oinc",
+      "bookingCode": "PASS-4296",
+      "queueNumber": 13,
+      "slotId": "slot-instiper-1600",
+      "studentName": "Ikhsan Kurniawan",
+      "studentNim": "25242004/ 07",
+      "studentWa": "082280574954",
+      "checkInStatus": "PENDING",
+      "checkInTime": null,
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-24T05:44:20.107Z"
+    },
+    {
+      "id": "book-1792820769405-8tyr",
+      "bookingCode": "PASS-8272",
+      "queueNumber": 14,
+      "slotId": "slot-instiper-1600",
+      "studentName": "Azril padila Ramadhan",
+      "studentNim": "25241013/kelompok7",
+      "studentWa": "082286537230",
+      "checkInStatus": "PENDING",
+      "checkInTime": null,
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-24T05:46:09.405Z"
+    },
+    {
+      "id": "book-1792821606280-vmgb",
+      "bookingCode": "PASS-6419",
+      "queueNumber": 15,
+      "slotId": "slot-instiper-1600",
+      "studentName": "Maxy Auto Marend",
+      "studentNim": "25242027",
+      "studentWa": "081545487355",
+      "checkInStatus": "PENDING",
+      "checkInTime": null,
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-24T06:00:06.280Z"
+    },
+    {
+      "id": "book-1792821885362-prb3",
+      "bookingCode": "PASS-8532",
+      "queueNumber": 1,
+      "slotId": "slot-instiper-1900",
+      "studentName": "Maulani nur Irfansyah",
+      "studentNim": "25242022/7",
+      "studentWa": "085283210173",
+      "checkInStatus": "PENDING",
+      "checkInTime": null,
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-24T06:04:45.362Z"
     }
   ]
 };
 
+const KVDB_URL = "https://kvdb.io/6gwT5eZrZogiMHiKWimNab/db";
+let memoryDb = defaultData;
+
+// Auto-sync from cloud database
+try {
+  axios.get(KVDB_URL, { timeout: 4000 }).then(res => {
+    if (res.data && res.data.bookings) {
+      memoryDb = res.data;
+    }
+  }).catch(() => {});
+} catch (e) {}
+
 function readDb() {
   try {
     if (fs.existsSync(DB_PATH)) {
-      return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+      return JSON.parse(fs.readFileSync(DB_PATH, "utf-8"));
     }
-  } catch (e) {
-    console.error('Error reading db:', e.message);
-  }
-  return defaultData;
+  } catch (e) {}
+  return memoryDb;
 }
 
 function writeDb(data) {
+  memoryDb = data;
   try {
     if (!fs.existsSync(DB_DIR)) {
       fs.mkdirSync(DB_DIR, { recursive: true });
     }
-    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
-    return true;
+    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf-8");
   } catch (e) {
     try {
-      // Fallback to local root db.json
-      fs.writeFileSync(path.join(__dirname, 'db.json'), JSON.stringify(data, null, 2), 'utf-8');
-      return true;
-    } catch (err) {
-      console.error('Error writing db:', err.message);
-      return false;
-    }
+      fs.writeFileSync(path.join(__dirname, "db.json"), JSON.stringify(data, null, 2), "utf-8");
+    } catch (err) {}
   }
+
+  // Sync to permanent cloud database
+  try {
+    axios.post(KVDB_URL, data, { timeout: 5000 }).catch(() => {});
+  } catch (err) {}
+  return true;
 }
 
 // Initialize db file if missing
