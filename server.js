@@ -54,38 +54,117 @@ const defaultData = {
       "createdAt": "2026-10-26T14:00:00.000Z"
     }
   ],
-  "bookings": []
+  "bookings": [
+    {
+      "id": "book-1793027586000-hj",
+      "bookingCode": "PASS-6686",
+      "queueNumber": 1,
+      "slotId": "slot-20261027-1600",
+      "studentName": "Harun Jihadi",
+      "studentNim": "25241005/ kelompok 3",
+      "studentWa": "082143759745",
+      "checkInStatus": "PENDING",
+      "checkInTime": null,
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-26T15:13:00.000Z"
+    },
+    {
+      "id": "book-1793027510233-4hpc",
+      "bookingCode": "PASS-9854",
+      "queueNumber": 2,
+      "slotId": "slot-20261027-1600",
+      "studentName": "MARANTIUS ALGO",
+      "studentNim": "25244009/Kelompok 7",
+      "studentWa": "0895326196217",
+      "checkInStatus": "PENDING",
+      "checkInTime": null,
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-26T15:11:50.233Z"
+    },
+    {
+      "id": "book-1793027518148-dxyx",
+      "bookingCode": "PASS-6376",
+      "queueNumber": 3,
+      "slotId": "slot-20261027-1600",
+      "studentName": "Nickyta Fainaya Br Damanik",
+      "studentNim": "25243004/Kelompok 3",
+      "studentWa": "082180988495",
+      "checkInStatus": "PENDING",
+      "checkInTime": null,
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-26T15:11:58.148Z"
+    },
+    {
+      "id": "book-1793027524896-isrs",
+      "bookingCode": "PASS-9020",
+      "queueNumber": 4,
+      "slotId": "slot-20261027-1600",
+      "studentName": "Azril padila Ramadhan",
+      "studentNim": "25241013/kelompok7",
+      "studentWa": "082286537230",
+      "checkInStatus": "PENDING",
+      "checkInTime": null,
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-26T15:12:04.896Z"
+    },
+    {
+      "id": "book-1793081389953-2ric",
+      "bookingCode": "PASS-7957",
+      "queueNumber": 5,
+      "slotId": "slot-20261027-1600",
+      "studentName": "Dimas Muhammad Rizky",
+      "studentNim": "25244004/Kelompok 3",
+      "studentWa": "",
+      "checkInStatus": "CHECKED_IN",
+      "checkInTime": "2026-10-27T06:10:21.475Z",
+      "sanctionApplied": null,
+      "sanctionStatus": "NONE",
+      "createdAt": "2026-10-27T06:09:49.953Z"
+    }
+  ]
 };
 const KVDB_URL = "https://kvdb.io/6gwT5eZrZogiMHiKWimNab/db";
 let memoryDb = defaultData;
+let lastSyncTime = 0;
 
-// Sync from cloud initially
-try {
-  axios.get(KVDB_URL, { timeout: 4000 }).then(res => {
-    if (res.data && res.data.bookings && Array.isArray(res.data.bookings)) {
-      memoryDb = res.data;
-      // Ensure slots exist and have quota 10
-      if (!memoryDb.slots || memoryDb.slots.length === 0) {
-        memoryDb.slots = defaultData.slots;
-        writeDb(memoryDb);
+// Cloud Sync Middleware: ALWAYS guarantees memoryDb is fresh from KVdb before any /api route executes!
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    const now = Date.now();
+    if (now - lastSyncTime > 2000 || !memoryDb || !memoryDb.bookings || memoryDb.bookings.length === 0) {
+      try {
+        const cloudRes = await axios.get(KVDB_URL, { timeout: 3500 });
+        if (cloudRes.data && Array.isArray(cloudRes.data.bookings) && Array.isArray(cloudRes.data.slots)) {
+          memoryDb = cloudRes.data;
+          lastSyncTime = Date.now();
+        }
+      } catch (err) {
+        console.error("Cloud sync warning:", err.message);
       }
-      console.log("Synchronized from Cloud Database:", memoryDb.bookings.length, "bookings, ", memoryDb.slots.length, "slots");
     }
-  }).catch(() => {});
-} catch(e) {}
+  }
+  next();
+});
 
 function readDb() {
-  return memoryDb;
+  return memoryDb || defaultData;
 }
 
-function writeDb(data) {
+async function writeDb(data) {
   memoryDb = data;
+  lastSyncTime = Date.now();
   try {
-    axios.post(KVDB_URL, JSON.stringify(data), {
+    await axios.post(KVDB_URL, JSON.stringify(data), {
       headers: { 'Content-Type': 'application/json' },
-      timeout: 3000
-    }).catch(err => console.error("Cloud DB sync warning:", err.message));
-  } catch(e) {}
+      timeout: 4000
+    });
+  } catch(err) {
+    console.error("Cloud DB sync warning:", err.message);
+  }
 }
 
 // -------------------------------------------------------------
@@ -280,7 +359,7 @@ app.post('/api/public/book', async (req, res) => {
   };
 
   db.bookings.push(newBooking);
-  writeDb(db);
+  await writeDb(db);
 
   const baseUrl = getBaseUrl(req);
   const boardingPassUrl = baseUrl + '/boarding-pass.html?code=' + bookingCode;
@@ -374,7 +453,7 @@ app.post('/api/public/checkin', async (req, res) => {
   }
 
   booking.checkInTime = now.toISOString();
-  writeDb(db);
+  await writeDb(db);
 
   const checkInMsg = (isLate ? '⚠️ *CHECK-IN TERLAMBAT (DENGAN SANKSI)*' : '✅ *CHECK-IN MANDIRI BERHASIL*') + '\n\n' +
     'Praktikan telah melakukan konfirmasi kehadiran:\n' +
@@ -482,7 +561,7 @@ app.get('/api/admin/overview', (req, res) => {
   res.json({ stats, slots, bookings: enriched, settings: db.settings, serverTime: new Date().toISOString() });
 });
 
-app.post('/api/admin/slots', (req, res) => {
+app.post('/api/admin/slots', async (req, res) => {
   const db = readDb();
   if (!db.slots) db.slots = [];
 
@@ -522,7 +601,7 @@ app.post('/api/admin/slots', (req, res) => {
       db.slots.push(slot);
       createdSlots.push(slot);
     }
-    writeDb(db);
+    await writeDb(db);
     return res.json({ success: true, count: createdSlots.length, slots: createdSlots });
   } else {
     const quota = Math.max(1, parseInt(req.body.quota) || 10);
@@ -538,30 +617,30 @@ app.post('/api/admin/slots', (req, res) => {
       createdAt: new Date().toISOString()
     };
     db.slots.push(newSlot);
-    writeDb(db);
+    await writeDb(db);
     return res.json({ success: true, slot: newSlot });
   }
 });
 
-app.delete('/api/admin/slots/:id', (req, res) => {
+app.delete('/api/admin/slots/:id', async (req, res) => {
   const db = readDb();
   db.slots = db.slots.filter(s => s.id !== req.params.id);
-  writeDb(db);
+  await writeDb(db);
   res.json({ success: true });
 });
 
-app.delete('/api/admin/bookings/:id', (req, res) => {
+app.delete('/api/admin/bookings/:id', async (req, res) => {
   const db = readDb();
   const initialLength = (db.bookings || []).length;
   db.bookings = (db.bookings || []).filter(b => b.id !== req.params.id);
   if (db.bookings.length === initialLength) {
     return res.status(404).json({ error: 'Data praktikan tidak ditemukan.' });
   }
-  writeDb(db);
+  await writeDb(db);
   res.json({ success: true, message: 'Data praktikan berhasil dihapus.' });
 });
 
-app.post('/api/admin/bookings/cleanup-duplicates', (req, res) => {
+app.post('/api/admin/bookings/cleanup-duplicates', async (req, res) => {
   const db = readDb();
   const seenNames = new Set();
   const seenNims = new Set();
@@ -585,7 +664,7 @@ app.post('/api/admin/bookings/cleanup-duplicates', (req, res) => {
   });
 
   db.bookings = keptBookings;
-  writeDb(db);
+  await writeDb(db);
   res.json({
     success: true,
     removedCount,
@@ -593,15 +672,15 @@ app.post('/api/admin/bookings/cleanup-duplicates', (req, res) => {
   });
 });
 
-app.post('/api/admin/bookings/reset', (req, res) => {
+app.post('/api/admin/bookings/reset', async (req, res) => {
   const db = readDb();
   const count = (db.bookings || []).length;
   db.bookings = [];
-  writeDb(db);
+  await writeDb(db);
   res.json({ success: true, message: 'Seluruh antrean berhasil dikosongkan.', count });
 });
 
-app.patch('/api/admin/bookings/:id/status', (req, res) => {
+app.patch('/api/admin/bookings/:id/status', async (req, res) => {
   const db = readDb();
   const b = db.bookings.find(item => item.id === req.params.id);
   if (!b) return res.status(404).json({ error: 'Booking tidak ditemukan' });
@@ -609,23 +688,23 @@ app.patch('/api/admin/bookings/:id/status', (req, res) => {
   if (req.body.status === 'CHECKED_IN' && !b.checkInTime) {
     b.checkInTime = new Date().toISOString();
   }
-  writeDb(db);
+  await writeDb(db);
   res.json({ success: true, booking: b });
 });
 
-app.patch('/api/admin/bookings/:id/sanction', (req, res) => {
+app.patch('/api/admin/bookings/:id/sanction', async (req, res) => {
   const db = readDb();
   const b = db.bookings.find(item => item.id === req.params.id);
   if (!b) return res.status(404).json({ error: 'Booking tidak ditemukan' });
   b.sanctionStatus = req.body.sanctionStatus;
-  writeDb(db);
+  await writeDb(db);
   res.json({ success: true, booking: b });
 });
 
-app.post('/api/admin/settings', (req, res) => {
+app.post('/api/admin/settings', async (req, res) => {
   const db = readDb();
   db.settings = { ...db.settings, ...req.body };
-  writeDb(db);
+  await writeDb(db);
   res.json({ success: true, settings: db.settings });
 });
 
